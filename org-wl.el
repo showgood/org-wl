@@ -86,4 +86,4 @@
 
 (provide 'org-wl)
 
-;;; org-rmail.el ends here
+;;; org-wl.el ends here
