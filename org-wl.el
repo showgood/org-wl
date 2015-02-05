@@ -21,7 +21,11 @@
 ;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth
 ;; Floor, Boston, MA 02110-1301, USA.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Commentary:
 ;;
+;; This file implements links to Wanderlust messages from within Org-mode.
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Template example:
 ;; (add-to-list 'org-capture-templates '(("e" "Email Todo" entry
 ;;                                        (file+headline "~/org/myfile.org" "Tasks")
@@ -46,31 +50,38 @@
 
 (defun org-wl-store-link ()
   "Store a link to a wl folder or message."
-  (when (eq major-mode 'wl-summary-mode)
-    (let ((folder (elmo-folder-name-internal wl-summary-buffer-elmo-folder))
-          (message-id (wl-summary-message-number)))
-      (save-excursion
-        (wl-summary-set-message-buffer-or-redisplay)
-        (let* ((from (mail-fetch-field "from"))
-               (to (mail-fetch-field "to"))
-               (subject (mail-fetch-field "subject"))
-               (date (mail-fetch-field "date"))
-               (date-ts (and date (format-time-string
-                                   (org-time-stamp-format t)
-                                   (date-to-time date))))
-               (date-ts-ia (and date (format-time-string
-                                      (org-time-stamp-format t t)
-                                      (date-to-time date))))
-               link)
-          (org-store-link-props
-           :type "wl" :from from :to to
-           :subject subject :message-id message-id)
-          (when date
-            (org-add-link-props :date date :date-timestamp date-ts
-                                :date-timestamp-inactive date-ts-ia))
-          (setq link (concat "wl:" folder "#" (number-to-string message-id)))
-          (org-add-link-props :link link :description subject)
-          link)))))
+  (let ((buf (if (eq major-mode 'wl-summary-mode)
+                 (current-buffer)
+               (and (boundp 'wl-message-buffer-cur-summary-buffer)
+                    wl-message-buffer-cur-summary-buffer))))
+    (when buf
+      (with-current-buffer buf
+        (when (eq major-mode 'mime-view-mode)
+          (switch-to-buffer wl-message-buffer-cur-summary-buffer))
+        (when (eq major-mode 'wl-summary-mode)
+          (let ((folder (elmo-folder-name-internal wl-summary-buffer-elmo-folder))
+                (message-id (wl-summary-message-number)))
+            (wl-summary-set-message-buffer-or-redisplay)
+            (let* ((from (mail-fetch-field "from"))
+                   (to (mail-fetch-field "to"))
+                   (subject (mail-fetch-field "subject"))
+                   (date (mail-fetch-field "date"))
+                   (date-ts (and date (format-time-string
+                                       (org-time-stamp-format t)
+                                       (date-to-time date))))
+                   (date-ts-ia (and date (format-time-string
+                                          (org-time-stamp-format t t)
+                                          (date-to-time date))))
+                   link)
+              (org-store-link-props
+               :type "wl" :from from :to to
+               :subject subject :message-id message-id)
+              (when date
+                (org-add-link-props :date date :date-timestamp date-ts
+                                    :date-timestamp-inactive date-ts-ia))
+              (setq link (concat "wl:" folder "#" (number-to-string message-id)))
+              (org-add-link-props :link link :description subject)
+              link)))))))
 
 
 (defun org-wl-open (path)
