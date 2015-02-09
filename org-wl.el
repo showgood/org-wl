@@ -91,6 +91,8 @@
   (let* ((folder (match-string 1 path))
          (msg (string-to-number (match-string 2 path)))
          (elmo-folder (wl-folder-get-elmo-folder folder)))
+    (save-window-excursion
+      (wl-folder-goto-folder-subr folder))
     (wl-summary-redisplay-internal elmo-folder msg)
   ))
 
