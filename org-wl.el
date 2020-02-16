@@ -27,9 +27,11 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Template example:
-;; (add-to-list 'org-capture-templates '(("e" "Email Todo" entry
-;;                                        (file+headline "~/org/myfile.org" "Tasks")
-;;                                        "* TODO %^{Brief Description}\nEmail: %a\nFrom: %:from \nTo: %:to \n%?Added: %U\n" :prepend t)))
+;; (after! org
+;;   (add-to-list 'org-capture-templates
+;;                '("e" "Email Todo" entry
+;;         (file+headline "~/org/inbox.org" "Task")
+;;         "* TODO %^{Brief Description}\nEmail: %a\nFrom: %:from \nTo: %:to \n%?Added: %U\n" :prepend t)))
 
 
 ;;; Code:
@@ -44,9 +46,6 @@
                                                                         FORCE-RELOAD
                                                                         MIME-MODE HEADER-MODE))
 (declare-function wl-folder-get-elmo-folder "wl-folder" (ENTITY &optional NO-CACHE))
-
-(org-add-link-type "wl" 'org-wl-open)
-(add-hook 'org-store-link-functions 'org-wl-store-link)
 
 (defun org-wl-store-link ()
   "Store a link to a wl folder or message."
@@ -83,8 +82,7 @@
               (org-add-link-props :link link :description subject)
               link)))))))
 
-
-(defun org-wl-open (path)
+(defun org-wl-follow (path)
   "Follow a wl message link to the specified PATH."
   (unless (string-match "\\(.*\\)#\\([0-9]+\\)" path)
     (error "Error in wl link"))
@@ -93,10 +91,9 @@
          (elmo-folder (wl-folder-get-elmo-folder folder)))
     (save-window-excursion
       (wl-folder-goto-folder-subr folder))
-    (wl-summary-redisplay-internal elmo-folder msg)
-  ))
+    (wl-summary-redisplay-internal elmo-folder msg)))
 
+(org-link-set-parameters "wl" :follow 'org-wl-follow :store 'org-wl-store-link)
 
 (provide 'org-wl)
-
 ;;; org-wl.el ends here
